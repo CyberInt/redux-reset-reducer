@@ -47,6 +47,6 @@
     "webpack": "1.13.1"
   },
   "dependencies": {
-    "redux-reuse": "0.2.3"
+    "redux-reuse": "0.3.0"
   }
 }
