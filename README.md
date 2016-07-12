@@ -17,7 +17,7 @@ import reset from 'redux-reset-reducer';
 var reset = require('redux-reset-reducer');
 ```
 
-Or import ES2015 modules
+#### If you need ES6 module
 ```javascript
 import reset from 'redux-reset-reducer/es6';
 ```
@@ -40,9 +40,28 @@ Use the Universal Module Definition (UMD)
 ## API
 
 ```js
-reset(...actionTypes: String[]): (reducer) => reducer
+reset(
+  options: {
+    actionCheck: String | String[] | (state: any, action: Object) => boolean,
+    initialState: ?any | (state: any, action: Object) => any
+  }
+): (reducer) => reducer
 ```
 
-Creates a higher-order reducer which resets state of base reducer to its initial state
-when actions with passed types occurs. Keep in mind that base reducer should return initial
-state when passed state is `undefined`.
+Creates a higher-order reducer which resets state of base reducer.
+
+If `initialState` is provided, then state will be reseted to it, otherwise base reducer will be
+invoked with `undefined` as current state, so it will reset state to its defaults
+(base reducer must return initial state when passed state is `undefined`).
+`initialState` can be function, in such a case it will be invoked in order to generate state,
+based on current state and action.
+
+If `actionCheck` is action type or array of action types, then state will be reseted
+when action with one of the provided types occurs. If `actionCheck` is function, then state
+will be reseted when this function returns truthy value, based on current state and action.
+
+## Comparison with other libraries.
+There are at least two similar projects: [redux-reset](https://github.com/abhiaiyer91/redux-reset)
+by Abhi Aiyer and [redux-recycle](https://github.com/omnidan/redux-recycle) by Daniel Bugl.
+Both of these projects are good, but provide less flexible and extensive API than redux-reset-state,
+therefore suppert less amount of usecases, so choose what you need :)
