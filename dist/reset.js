@@ -68,7 +68,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 	/**
-	 * These are private action types reserved by redux-reuse.
+	 * These are private action types reserved by redux-reset-reduser.
 	 *
 	 * From Redux:
 	 * For any unknown actions, you must return the current state.
@@ -79,23 +79,63 @@ return /******/ (function(modules) { // webpackBootstrap
 	  RESET: '@@reduxReuse/RESET'
 	};
 
-	/**
-	 * Creates a reducer wrapper which resets the state for the given action type(s)
-	 * @param {string[]} actions
-	 * @returns {function} a function of signature (reducer) => newReducer
-	 */
-	var reset = function reset() {
-	  for (var _len = arguments.length, actions = Array(_len), _key = 0; _key < _len; _key++) {
-	    actions[_key] = arguments[_key];
+	var generateInitialState = function generateInitialState(initialState, state, action, reducer) {
+	  if (initialState === undefined) {
+	    return reducer(undefined, { type: actionTypes.RESET });
 	  }
 
+	  return typeof initialState === 'function' ? initialState(state, action) : initialState;
+	};
+
+	var withPredicate = function withPredicate(predicate, initialState) {
+	  return function (reducer) {
+	    return function (state, action) {
+	      if (predicate(state, action)) {
+	        return generateInitialState(initialState, state, action, reducer);
+	      }
+
+	      return reducer(state, action);
+	    };
+	  };
+	};
+
+	/**
+	 * Creates a reducer wrapper which resets the state to original reducer's initial state
+	 * for the given action type(s) or when predicate evaluates to truthy value.
+	 * If initialState also provided, then state is reseted to this value instead of
+	 * initial state of original reducer.
+	 * @param {object} options
+	 * @param {(string|string[]|function)} [options.actionCheck] - Can be either list of action types,
+	 *   for which state should be reseted, or function, which accept state and action objects as
+	 *   arguments and if evaluates to truthy value, then state will be reseted.
+	 * @param {*} [options.initialState] - value, which will override original reducer's
+	 *   initial state. If function provided, then this function will be used to generate
+	 *   state, based on current state and action object.
+	 * @returns {function} a function of signature (reducer) => newReducer
+	 */
+	var reset = function reset(_ref) {
+	  var actionCheck = _ref.actionCheck;
+	  var initialState = _ref.initialState;
 	  return function () {
 	    var reducer = arguments.length <= 0 || arguments[0] === undefined ? _reduxReuse.nullReducer : arguments[0];
-	    return (0, _reduxReuse.extendReducer)(reducer, actions.reduce(function (handlers, actionType) {
-	      return _extends({}, handlers, _defineProperty({}, actionType, function () {
-	        return reducer(undefined, { type: actionTypes.RESET });
+
+	    if (!actionCheck) {
+	      return reducer;
+	    }
+
+	    if (typeof actionCheck === 'function') {
+	      return withPredicate(actionCheck, initialState)(reducer);
+	    }
+
+	    var actionTypes = Array.isArray(actionCheck) ? actionCheck : [actionCheck];
+
+	    var newHandlers = actionTypes.reduce(function (handlers, actionType) {
+	      return _extends({}, handlers, _defineProperty({}, actionType, function (state, action) {
+	        return generateInitialState(initialState, state, action, reducer);
 	      }));
-	    }, {}));
+	    }, {});
+
+	    return (0, _reduxReuse.extendReducer)(reducer, newHandlers);
 	  };
 	};
 
