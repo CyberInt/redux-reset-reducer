@@ -46,7 +46,7 @@
     "karma-webpack": "1.7.0",
     "webpack": "1.13.1"
   },
-  "dependencies": {
-    "redux-reuse": "0.3.0"
+  "peerDependencies": {
+    "redux-reuse": ">=0.3.0"
   }
 }
